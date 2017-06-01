@@ -318,11 +318,84 @@ simple_expression* simple_expression::read_expression(ifstream& f_in)
 {
 	char char_buffer;
 	f_in >> char_buffer;
+
+	return NULL;
 }
 
 
 string read_token(istream& input)
 {
+	input >> noskipws;
 
+	string the_token = "";
+	bool prefix_whitespace_flag = true;
+	bool postfix_whitespace_flag = false;
+	enum {NONE, ALPHANUM, NUMBER, SYMBOL} token_type = NONE;
+	bool complete_flag = false;
+	do
+	{
+		char char_buffer;
+		char_buffer = input.peek(); 
+		if (input.eof() || input.fail())
+		{
+			complete_flag = true;
+		}
+		else if (isalpha(char_buffer) || char_buffer == '_')
+		{
+			prefix_whitespace_flag = false;
+			if (postfix_whitespace_flag || ((token_type != NONE) && (token_type != ALPHANUM)))
+			{
+				complete_flag = true;
+			}
+			else 
+			{
+				the_token += char_buffer;
+				token_type = ALPHANUM;
+			}
+		}
+		else if (isdigit(char_buffer))
+		{
+			prefix_whitespace_flag = false;
+			if (postfix_whitespace_flag || ((token_type != NONE) && (token_type != ALPHANUM) && (token_type != NUMBER)))
+			{
+				complete_flag = true;
+			}
+			else
+			{
+				the_token += char_buffer;
+				if (token_type == NONE)
+				{
+					token_type = NUMBER;
+				}
+			}
+		}
+		else if (isspace(char_buffer))
+		{
+			if (!prefix_whitespace_flag)
+			{
+				postfix_whitespace_flag = true;
+			}
+		}
+		else
+		{
+			prefix_whitespace_flag = false;
+			if (postfix_whitespace_flag || (token_type != NONE))
+			{
+				complete_flag = true;
+			}
+			else
+			{
+				the_token += char_buffer;
+				token_type = SYMBOL;
+			}
+		}
+
+		if (!complete_flag) // Remove character is not yet finished.
+		{
+			input >> char_buffer;
+		}
+	} while (!complete_flag);
+
+	return the_token;
 }
 

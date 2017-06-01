@@ -7,7 +7,8 @@
 #include "simple_expression.h"
 #include "causal_network.h"
 
-#define __TESTING_VARIABLES__
+//#define __TESTING_VARIABLES__
+#define __TESTING_TOKEN_READ__
 
 void testing()
 {
@@ -37,6 +38,21 @@ void testing()
 	}
 
 #endif
+
+#ifdef __TESTING_TOKEN_READ__
+	{
+		ifstream input("read_token_test.txt");
+		string curr_token = "";
+		do
+		{
+			curr_token = read_token(input);
+			std::cout << "\n********\n";
+			std::cout << curr_token;
+			std::cout << "\n********";
+		} while (curr_token != "");
+	}
+#endif
+
 }
 
 int main()
