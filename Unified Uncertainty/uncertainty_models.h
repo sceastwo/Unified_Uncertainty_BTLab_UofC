@@ -12,7 +12,11 @@ typedef unsigned long uint32;
 #include <cstdlib>
 
 
-enum model_type {MT_CRISP, MT_EPSILON, MT_PROBABILITY, MT_CREDAL, MT_INTERVAL, MT_DS, MT_FUZZY};
+enum model_type {MT_CRISP, MT_EPSILON, MT_PROBABILITY, MT_CREDAL, MT_FUZZY};
+
+enum credal_set_type {CST_LIST, CST_INTERVAL, CST_DS};
+
+enum fuzzy_model_type {FMT_PROBABILITY, FMT_SEMANTIC};
 
 class uncertainty_model
 {
@@ -66,22 +70,35 @@ public:
 
 class credal_set : public uncertainty_model
 {
+protected:
+	credal_set_type the_credal_set_type;
+public:
+	credal_set(credal_set_type new_credal_set_type);
+	credal_set(credal_set& existing_model);
+	credal_set& operator=(credal_set& existing_model);
+	virtual credal_set* copy();
+	~credal_set();
+	credal_set_type get_credal_set_type();
+};
+
+class extreme_points : public credal_set
+{
 	uint16 domain_size;
 	uint16 num_of_extreme_points;
 	double** PrC;
 
 	void normalize();
 public:
-	credal_set(uint16 new_domain_size, uint16 new_num_of_extreme_points, double** new_PrC); // A deep copy is used.
-	credal_set(credal_set& existing_model); // A deep copy is used.
-	credal_set& operator=(credal_set& existing_model); // A deep copy is used.
-	virtual credal_set* copy();
-	~credal_set();
+	extreme_points(uint16 new_domain_size, uint16 new_num_of_extreme_points, double** new_PrC); // A deep copy is used.
+	extreme_points(extreme_points& existing_model); // A deep copy is used.
+	extreme_points& operator=(extreme_points& existing_model); // A deep copy is used.
+	virtual extreme_points* copy();
+	~extreme_points();
 	uint16 get_domain_size();
 	double get_PrC(uint16 extreme_point, uint16 val);
 };
 
-class interval_distribution : public uncertainty_model
+class interval_distribution : public credal_set
 {
 	uint16 domain_size;
 	double* PrL;
@@ -99,7 +116,7 @@ public:
 	double get_PrU(uint16 val);
 };
 
-class Dempster_Shafer_model : public uncertainty_model
+class Dempster_Shafer_model : public credal_set
 {
 	uint16 domain_size; //The domain size cannot exceed 31.
 	uint32 num_of_sets; 
@@ -116,21 +133,54 @@ public:
 	double get_m(uint32 set);
 };
 
-enum fuzzy_values {FV_0S, FV_1S, FV_0W, FV_1W, FV_H, FV_U};
+class fuzzy_model : public uncertainty_model
+{
+protected:
+	fuzzy_model_type the_fuzzy_model_type;
+public:
+	fuzzy_model(fuzzy_model_type new_fuzzy_model_type);
+	fuzzy_model(fuzzy_model& existing_model);
+	fuzzy_model& operator=(fuzzy_model& existing_model);
+	virtual fuzzy_model* copy();
+	~fuzzy_model();
+	fuzzy_model_type get_fuzzy_model_type();
+};
 
-class fuzzy_distribution : public uncertainty_model
+class fuzzy_probability_distribution : public fuzzy_model
 {
 	uint16 domain_size;
-	fuzzy_values* PrF;
+	double* l;
+	double* c;
+	double* u;
+
+	void normalize();
+public:
+	fuzzy_probability_distribution(uint16 new_domain_size, double* new_l, double* new_c, double* new_u); // A deep copy is used.
+	fuzzy_probability_distribution(fuzzy_probability_distribution& existing_model); // A deep copy is used.
+	fuzzy_probability_distribution& operator=(fuzzy_probability_distribution& existing_model); // A deep copy is used.
+	virtual fuzzy_probability_distribution* copy();
+	~fuzzy_probability_distribution();
+	uint16 get_domain_size();
+	double get_l(uint16 val);
+	double get_c(uint16 val);
+	double get_u(uint16 val);
+};
+
+enum semantic_values {FV_0S, FV_1S, FV_0W, FV_1W, FV_H, FV_U};
+
+class semantic_distribution : public fuzzy_model
+{
+	uint16 domain_size;
+	semantic_values* PrS;
 
 public:
-	fuzzy_distribution(uint16 new_domain_size, fuzzy_values* new_PrF); // A deep copy is used.
-	fuzzy_distribution(fuzzy_distribution& existing_model); // A deep copy is used.
-	fuzzy_distribution& operator=(fuzzy_distribution& existing_model); // A deep copy is used.
-	virtual fuzzy_distribution* copy();
-	~fuzzy_distribution();
+	semantic_distribution(uint16 new_domain_size, semantic_values* new_PrF); // A deep copy is used.
+	semantic_distribution(semantic_distribution& existing_model); // A deep copy is used.
+	semantic_distribution& operator=(semantic_distribution& existing_model); // A deep copy is used.
+	virtual semantic_distribution* copy();
+	~semantic_distribution();
 	uint16 get_domain_size();
-	fuzzy_values get_PrF(uint16 val);
+	semantic_values get_PrS(uint16 val);
 };
 
 

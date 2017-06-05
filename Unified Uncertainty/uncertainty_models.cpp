@@ -160,7 +160,39 @@ void probability_distribution::set_Pr(double* new_Pr)
 }
 
 
-void credal_set::normalize()
+credal_set::credal_set(credal_set_type new_credal_set_type) : uncertainty_model(MT_CREDAL)
+{
+	the_credal_set_type = new_credal_set_type;
+}
+
+credal_set::credal_set(credal_set& existing_model) : uncertainty_model(existing_model)
+{
+	the_credal_set_type = existing_model.the_credal_set_type;
+}
+
+credal_set& credal_set::operator=(credal_set& existing_model)
+{
+	uncertainty_model::operator=(existing_model);
+	the_credal_set_type = existing_model.the_credal_set_type;
+	return *this;
+}
+
+credal_set* credal_set::copy()
+{
+	return new credal_set(*this);
+}
+
+credal_set::~credal_set()
+{
+}
+
+credal_set_type credal_set::get_credal_set_type()
+{
+	return the_credal_set_type;
+}
+
+
+void extreme_points::normalize()
 {
 	for (uint16 j = 0; j < num_of_extreme_points; j++)
 	{
@@ -176,7 +208,7 @@ void credal_set::normalize()
 	}
 }
 
-credal_set::credal_set(uint16 new_domain_size, uint16 new_num_of_extreme_points, double** new_PrC) : uncertainty_model(MT_CREDAL)
+extreme_points::extreme_points(uint16 new_domain_size, uint16 new_num_of_extreme_points, double** new_PrC) : credal_set(CST_LIST)
 {
 	domain_size = new_domain_size;
 	num_of_extreme_points = new_num_of_extreme_points;
@@ -192,7 +224,7 @@ credal_set::credal_set(uint16 new_domain_size, uint16 new_num_of_extreme_points,
 	normalize();
 }
 
-credal_set::credal_set(credal_set& existing_model) : uncertainty_model(existing_model)
+extreme_points::extreme_points(extreme_points& existing_model) : credal_set(existing_model)
 {
 	domain_size = existing_model.domain_size;
 	num_of_extreme_points = existing_model.num_of_extreme_points;
@@ -207,9 +239,9 @@ credal_set::credal_set(credal_set& existing_model) : uncertainty_model(existing_
 	}
 }
 
-credal_set& credal_set::operator=(credal_set& existing_model)
+extreme_points& extreme_points::operator=(extreme_points& existing_model)
 {
-	uncertainty_model::operator=(existing_model);
+	credal_set::operator=(existing_model);
 	for (uint16 j = 0; j < num_of_extreme_points; j++)
 	{
 		delete[] PrC[j];
@@ -229,12 +261,12 @@ credal_set& credal_set::operator=(credal_set& existing_model)
 	return *this;
 }
 
-credal_set* credal_set::copy()
+extreme_points* extreme_points::copy()
 {
-	return new credal_set(*this);
+	return new extreme_points(*this);
 }
 
-credal_set::~credal_set()
+extreme_points::~extreme_points()
 {
 	for (uint16 j = 0; j < num_of_extreme_points; j++)
 	{
@@ -243,12 +275,12 @@ credal_set::~credal_set()
 	delete[] PrC;
 }
 
-uint16 credal_set::get_domain_size()
+uint16 extreme_points::get_domain_size()
 {
 	return domain_size;
 }
 
-double credal_set::get_PrC(uint16 extreme_point, uint16 val)
+double extreme_points::get_PrC(uint16 extreme_point, uint16 val)
 {
 	return PrC[extreme_point][val];
 }
@@ -273,7 +305,7 @@ void interval_distribution::normalize()
 	}
 }
 
-interval_distribution::interval_distribution(uint16 new_domain_size, double* new_PrL, double* new_PrU) : uncertainty_model(MT_INTERVAL)
+interval_distribution::interval_distribution(uint16 new_domain_size, double* new_PrL, double* new_PrU) : credal_set(CST_INTERVAL)
 {
 	domain_size = new_domain_size;
 	PrL = new double[domain_size];
@@ -286,7 +318,7 @@ interval_distribution::interval_distribution(uint16 new_domain_size, double* new
 	normalize();
 }
 
-interval_distribution::interval_distribution(interval_distribution& existing_model) : uncertainty_model(existing_model)
+interval_distribution::interval_distribution(interval_distribution& existing_model) : credal_set(existing_model)
 {
 	domain_size = existing_model.domain_size;
 	PrL = new double[domain_size];
@@ -300,7 +332,7 @@ interval_distribution::interval_distribution(interval_distribution& existing_mod
 
 interval_distribution& interval_distribution::operator=(interval_distribution& existing_model)
 {
-	uncertainty_model::operator=(existing_model);
+	credal_set::operator=(existing_model);
 	delete[] PrL;
 	delete[] PrU;
 	domain_size = existing_model.domain_size;
@@ -354,7 +386,7 @@ void Dempster_Shafer_model::normalize()
 	}
 }
 
-Dempster_Shafer_model::Dempster_Shafer_model(uint16 new_domain_size, double* new_m) : uncertainty_model(MT_DS)
+Dempster_Shafer_model::Dempster_Shafer_model(uint16 new_domain_size, double* new_m) : credal_set(CST_DS)
 {
 	domain_size = new_domain_size;
 	num_of_sets = 1 << domain_size;
@@ -365,7 +397,7 @@ Dempster_Shafer_model::Dempster_Shafer_model(uint16 new_domain_size, double* new
 	normalize();
 }
 
-Dempster_Shafer_model::Dempster_Shafer_model(Dempster_Shafer_model& existing_model) : uncertainty_model(existing_model)
+Dempster_Shafer_model::Dempster_Shafer_model(Dempster_Shafer_model& existing_model) : credal_set(existing_model)
 {
 	domain_size = existing_model.domain_size;
 	num_of_sets = 1 << domain_size;
@@ -377,7 +409,7 @@ Dempster_Shafer_model::Dempster_Shafer_model(Dempster_Shafer_model& existing_mod
 
 Dempster_Shafer_model& Dempster_Shafer_model::operator=(Dempster_Shafer_model& existing_model)
 {
-	uncertainty_model::operator=(existing_model);
+	credal_set::operator=(existing_model);
 	delete[] m;
 	domain_size = existing_model.domain_size;
 	num_of_sets = 1 << domain_size;
@@ -409,57 +441,182 @@ double Dempster_Shafer_model::get_m(uint32 set)
 }
 
 
-fuzzy_distribution::fuzzy_distribution(uint16 new_domain_size, fuzzy_values* new_PrF) : uncertainty_model(MT_FUZZY)
+fuzzy_model::fuzzy_model(fuzzy_model_type new_fuzzy_model_type) : uncertainty_model(MT_FUZZY)
 {
-	domain_size = new_domain_size;
-	PrF = new fuzzy_values[domain_size];
-	for (uint16 i = 0; i < domain_size; i++)
-	{
-		PrF[i] = new_PrF[i];
-	}
+	the_fuzzy_model_type = new_fuzzy_model_type;
 }
 
-fuzzy_distribution::fuzzy_distribution(fuzzy_distribution& existing_model) : uncertainty_model(existing_model.the_model_type)
+fuzzy_model::fuzzy_model(fuzzy_model& existing_model) : uncertainty_model(existing_model)
 {
-	domain_size = existing_model.domain_size;
-	PrF = new fuzzy_values[domain_size];
-	for (uint16 i = 0; i < domain_size; i++)
-	{
-		PrF[i] = existing_model.PrF[i];
-	}
+	the_fuzzy_model_type = existing_model.the_fuzzy_model_type;
 }
 
-fuzzy_distribution& fuzzy_distribution::operator=(fuzzy_distribution& existing_model)
+fuzzy_model& fuzzy_model::operator=(fuzzy_model& existing_model)
 {
 	uncertainty_model::operator=(existing_model);
-	delete[] PrF;
-	domain_size = existing_model.domain_size;
-	PrF = new fuzzy_values[domain_size];
-	for (uint16 i = 0; i < domain_size; i++)
-	{
-		PrF[i] = existing_model.PrF[i];
-	}
+	the_fuzzy_model_type = existing_model.the_fuzzy_model_type;
 	return *this;
 }
 
-fuzzy_distribution* fuzzy_distribution::copy()
+fuzzy_model* fuzzy_model::copy()
 {
-	return new fuzzy_distribution(*this);
+	return new fuzzy_model(*this);
 }
 
-fuzzy_distribution::~fuzzy_distribution()
+fuzzy_model::~fuzzy_model()
 {
-	delete[] PrF;
 }
 
-uint16 fuzzy_distribution::get_domain_size()
+fuzzy_model_type fuzzy_model::get_fuzzy_model_type()
+{
+	return the_fuzzy_model_type;
+}
+
+
+void fuzzy_probability_distribution::normalize()
+{
+	double total_sum = 0.0;
+	for (uint16 i = 0; i < domain_size; i++)
+	{
+		total_sum += c[i];
+	}
+	for (uint16 i = 0; i < domain_size; i++)
+	{
+		c[i] /= total_sum;
+	}
+}
+
+fuzzy_probability_distribution::fuzzy_probability_distribution(uint16 new_domain_size, double* new_l, double* new_c, double* new_u) : fuzzy_model(FMT_PROBABILITY)
+{
+	domain_size = new_domain_size;
+	l = new double[domain_size];
+	c = new double[domain_size];
+	u = new double[domain_size];
+	for (uint16 i = 0; i < domain_size; i++)
+	{
+		l[i] = new_l[i];
+		c[i] = new_c[i];
+		u[i] = new_u[i];
+	}
+}
+
+fuzzy_probability_distribution::fuzzy_probability_distribution(fuzzy_probability_distribution& existing_model) : fuzzy_model(existing_model)
+{
+	domain_size = existing_model.domain_size;
+	l = new double[domain_size];
+	c = new double[domain_size];
+	u = new double[domain_size];
+	for (uint16 i = 0; i < domain_size; i++)
+	{
+		l[i] = existing_model.l[i];
+		c[i] = existing_model.c[i];
+		u[i] = existing_model.u[i];
+	}
+}
+
+fuzzy_probability_distribution& fuzzy_probability_distribution::operator=(fuzzy_probability_distribution& existing_model)
+{
+	fuzzy_model::operator=(existing_model);
+	delete[] l;
+	delete[] c;
+	delete[] u;
+	domain_size = existing_model.domain_size;
+	l = new double[domain_size];
+	c = new double[domain_size];
+	u = new double[domain_size];
+	for (uint16 i = 0; i < domain_size; i++)
+	{
+		l[i] = existing_model.l[i];
+		c[i] = existing_model.c[i];
+		u[i] = existing_model.u[i];
+	}
+	return *this;
+}
+	
+fuzzy_probability_distribution* fuzzy_probability_distribution::copy()
+{
+	return new fuzzy_probability_distribution(*this);
+}
+
+fuzzy_probability_distribution::~fuzzy_probability_distribution()
+{
+	delete[] l;
+	delete[] c;
+	delete[] u;
+}
+
+uint16 fuzzy_probability_distribution::get_domain_size()
 {
 	return domain_size;
 }
 
-fuzzy_values fuzzy_distribution::get_PrF(uint16 val)
+double fuzzy_probability_distribution::get_l(uint16 val)
 {
-	return PrF[val];
+	return l[val];
+}
+
+double fuzzy_probability_distribution::get_c(uint16 val)
+{
+	return c[val];
+}
+
+double fuzzy_probability_distribution::get_u(uint16 val)
+{
+	return u[val];
+}
+
+
+semantic_distribution::semantic_distribution(uint16 new_domain_size, semantic_values* new_PrS) : fuzzy_model(FMT_SEMANTIC)
+{
+	domain_size = new_domain_size;
+	PrS = new semantic_values[domain_size];
+	for (uint16 i = 0; i < domain_size; i++)
+	{
+		PrS[i] = new_PrS[i];
+	}
+}
+
+semantic_distribution::semantic_distribution(semantic_distribution& existing_model) : fuzzy_model(existing_model)
+{
+	domain_size = existing_model.domain_size;
+	PrS = new semantic_values[domain_size];
+	for (uint16 i = 0; i < domain_size; i++)
+	{
+		PrS[i] = existing_model.PrS[i];
+	}
+}
+
+semantic_distribution& semantic_distribution::operator=(semantic_distribution& existing_model)
+{
+	uncertainty_model::operator=(existing_model);
+	delete[] PrS;
+	domain_size = existing_model.domain_size;
+	PrS = new semantic_values[domain_size];
+	for (uint16 i = 0; i < domain_size; i++)
+	{
+		PrS[i] = existing_model.PrS[i];
+	}
+	return *this;
+}
+
+semantic_distribution* semantic_distribution::copy()
+{
+	return new semantic_distribution(*this);
+}
+
+semantic_distribution::~semantic_distribution()
+{
+	delete[] PrS;
+}
+
+uint16 semantic_distribution::get_domain_size()
+{
+	return domain_size;
+}
+
+semantic_values semantic_distribution::get_PrS(uint16 val)
+{
+	return PrS[val];
 }
 
 
